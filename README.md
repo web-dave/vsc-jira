@@ -24,7 +24,7 @@ and replace the placeholder with your informations.
 
 ## Install
 
-In Visual Studio Code, simply hit  CMD/CTRL + Shift + P , search for "Install Extension", and then search for "jira".
+In Visual Studio Code, simply hit  CMD/CTRL + Shift + P , search for "Install Extension", and then search for "vsc-jira".
 
 ## run
 
