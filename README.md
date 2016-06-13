@@ -1,5 +1,4 @@
 # jira
-## This is the README for your extension "jira"
 
 with this extension you cat add git commit to your jira issue as a comment.
 It consumes  the [node-jira-client](https://github.com/jira-node/node-jira-client) and i greb some code from 
