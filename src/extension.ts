@@ -1,27 +1,80 @@
 'use strict';
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+import * as vscode from 'vscode';
+import * as cp from 'child_process';
+import * as historyUtil from './historyUtils';
+import * as path from 'path';
+import * as fs from 'fs';
+let JiraApi = require('jira-client');
+
+
+
+
 export function activate(context: vscode.ExtensionContext) {
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
+
     console.log('Congratulations, your extension "jira" is now active!');
+    let commits: any[];
+    let cwd = vscode.workspace.rootPath;
+    let issueNumber: string;
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
+    let comment = vscode.commands.registerCommand('extension.jiraCommit', () => {
 
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
+        let jira_conf = vscode.workspace.getConfiguration('jira');
+        console.log(jira_conf);
+        if (jira_conf['host'] !== undefined) {
+            vscode.window.showInputBox({ placeHolder: 'name of your project' }).then((data) => {
+                if ((data !== undefined) && (data !== null)) {
+                    issueNumber = data;
+
+                    historyUtil.getGitRepositoryPath(vscode.window.activeTextEditor.document.fileName).then((gitRepositoryPath) => {
+
+                        historyUtil.gitLog(gitRepositoryPath, []).then((log) => {
+                            commits = log;
+                            let comment: string;
+                            let items = [];
+                            for (let l in log) {
+                                items.push(log[l].message)
+                            }
+                            let options = { matchOnDescription: false, placeHolder: "select Commit" };
+
+                            vscode.window.showQuickPick(items, options).then((data) => {
+
+                                comment = historyUtil.parseLog(commits[items.indexOf(data)]);
+
+                                console.log(comment);
+
+                                let jira = new JiraApi(jira_conf);
+
+                                jira.findIssue(issueNumber).then((issue) => {
+                                    jira.addComment(issueNumber, comment).then((ret) => {
+                                        console.log(ret);
+
+                                    }).catch((err) => {
+                                        console.error(err);
+                                        vscode.window.showErrorMessage(`ERROR: comment Issue ${issueNumber}: ${err}`);
+                                    });
+                                }).catch((err) => {
+                                    vscode.window.showErrorMessage(`ERROR: Issue ${issueNumber} not found!`);
+                                });
+                            })
+
+                        }, (err) => {
+                            vscode.window.showErrorMessage('ERROR: ' + err);
+                        });
+
+
+                    }, (err) => {
+                        vscode.window.showErrorMessage('ERROR: ' + err);
+                    });
+                }
+            })
+        } else {
+            vscode.window.showErrorMessage('ERROR: no config file at' + `${cwd}/.vscode/jira.json`);
+        }
     });
 
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(comment);
 }
 
 // this method is called when your extension is deactivated

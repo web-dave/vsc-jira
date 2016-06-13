@@ -1,13 +1,37 @@
-# README
+# jira
 ## This is the README for your extension "jira"
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
 
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
+with this extension you cat add git commit to your jira issue as a comment.
+It consumes  the [node-jira-client](https://github.com/jira-node/node-jira-client) and i greb some code from 
+[Git History](https://marketplace.visualstudio.com/items?itemName=donjayamanne.githistory).
 
-### For more information
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+You need some config in your `.vscode` folder.
 
-**Enjoy!**
+
+So create a `jira.json`:
+```
+{
+    "protocol": "https",
+    "host": <URL>,
+    "username": <username>,
+    "password": <password>,
+    "apiVersion": "2",
+    "strictSSL": true
+}
+```
+and replace the placeholder with your informations.
+
+# Be shure to set jira.json  in your .gitignore!
+
+## Install
+
+In Visual Studio Code, simply hit  CMD/CTRL + Shift + P , search for "Install Extension", and then search for "jira".
+
+## run
+
+- simply hit  CMD/CTRL + Shift + P and type jira
+- you'll find `jira issue add git commit as comment`
+- select type your jira issuNumber
+- select a gira commit from the list
+
+**have fun**
