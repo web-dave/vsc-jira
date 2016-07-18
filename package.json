@@ -2,7 +2,7 @@
   "name": "jira",
   "displayName": "vsc-jira",
   "description": "view, comment, edit, create issues in jira",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "web-dave",
   "engines": {
     "vscode": "^1.0.0"
