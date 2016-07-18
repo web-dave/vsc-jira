@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
         let jira_conf = vscode.workspace.getConfiguration('jira');
         console.log(jira_conf);
         if (jira_conf['host'] !== undefined) {
-            vscode.window.showInputBox({ placeHolder: 'name of your project' }).then((data) => {
+            vscode.window.showInputBox({ placeHolder: 'ID of a Issue' }).then((data) => {
                 if ((data !== undefined) && (data !== null)) {
                     issueNumber = data;
 
