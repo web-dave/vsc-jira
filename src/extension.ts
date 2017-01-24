@@ -20,8 +20,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     let comment = vscode.commands.registerCommand('extension.jiraCommit', () => {
 
-        let jira_conf = vscode.workspace.getConfiguration('jira');
-        console.log(jira_conf);
+
+        let jira_conf_Dir = path.join(cwd,'.vscode','jira.json');
+        let jira_conf = require(jira_conf_Dir);
+        // console.log(jira_conf['host']);
+        
         if (jira_conf['host'] !== undefined) {
             vscode.window.showInputBox({ placeHolder: 'ID of a Issue' }).then((data) => {
                 if ((data !== undefined) && (data !== null)) {
