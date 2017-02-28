@@ -1,7 +1,7 @@
 # jira
 
-with this extension you cat add git commit to your jira issue as a comment.
-It consumes  the [node-jira-client](https://github.com/jira-node/node-jira-client) and i greb some code from 
+With this extension you can add git commit to your jira issue as a comment.
+It consumes  the [node-jira-client](https://github.com/jira-node/node-jira-client) and i greb some code from
 [Git History](https://marketplace.visualstudio.com/items?itemName=donjayamanne.githistory).
 
 You need some config in your `.vscode` folder.
@@ -20,7 +20,7 @@ So create a `jira.json`:
 ```
 and replace the placeholder with your informations.
 
-# Be shure to set jira.json  in your .gitignore!
+# Be sure to set jira.json  in your .gitignore!
 
 ## Install
 
@@ -30,7 +30,7 @@ In Visual Studio Code, simply hit  CMD/CTRL + Shift + P , search for "Install Ex
 
 - simply hit  CMD/CTRL + Shift + P and type jira
 - you'll find `jira issue add git commit as comment`
-- select type your jira issuNumber
-- select a gira commit from the list
+- select type your jira issue number
+- select a jira commit from the list
 
 **have fun**
