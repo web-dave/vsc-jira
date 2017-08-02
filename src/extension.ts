@@ -2,11 +2,12 @@
 
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
-import * as historyUtil from './historyUtils';
 import * as path from 'path';
 import * as fs from 'fs';
-let JiraApi = require('jira-client');
 
+import { JiraClient } from './jira';
+import { QuickPickItem } from 'vscode';
+import { Handler } from './handler';
 
 
 
@@ -14,70 +15,41 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     console.log('Congratulations, your extension "jira" is now active!');
-    let commits: any[];
-    let cwd = vscode.workspace.rootPath;
-    let issueNumber: string;
+    let commits: any[],
+        cwd = vscode.workspace.rootPath,
+        issueNumber: string,
+        jiraConfDir: string = path.join(cwd,'.vscode','jira.json'),
+        client: JiraClient = null;
 
-    let comment = vscode.commands.registerCommand('extension.jiraCommit', () => {
-
-
-        let jira_conf_Dir = path.join(cwd,'.vscode','jira.json');
-        let jira_conf = require(jira_conf_Dir);
-        // console.log(jira_conf['host']);
-        
-        if (jira_conf['host'] !== undefined) {
-            vscode.window.showInputBox({ placeHolder: 'ID of a Issue' }).then((data) => {
-                if ((data !== undefined) && (data !== null)) {
-                    issueNumber = data;
-
-                    historyUtil.getGitRepositoryPath(vscode.window.activeTextEditor.document.fileName).then((gitRepositoryPath) => {
-
-                        historyUtil.gitLog(gitRepositoryPath, []).then((log) => {
-                            commits = log;
-                            let comment: string;
-                            let items = [];
-                            for (let l in log) {
-                                items.push(log[l].message)
-                            }
-                            let options = { matchOnDescription: false, placeHolder: "select Commit" };
-
-                            vscode.window.showQuickPick(items, options).then((data) => {
-
-                                comment = historyUtil.parseLog(commits[items.indexOf(data)]);
-
-                                console.log(comment);
-
-                                let jira = new JiraApi(jira_conf);
-
-                                jira.findIssue(issueNumber).then((issue) => {
-                                    jira.addComment(issueNumber, comment).then((ret) => {
-                                        console.log(ret);
-
-                                    }).catch((err) => {
-                                        console.error(err);
-                                        vscode.window.showErrorMessage(`ERROR: comment Issue ${issueNumber}: ${err}`);
-                                    });
-                                }).catch((err) => {
-                                    vscode.window.showErrorMessage(`ERROR: Issue ${issueNumber} not found!`);
-                                });
-                            })
-
-                        }, (err) => {
-                            vscode.window.showErrorMessage('ERROR: ' + err);
-                        });
-
-
-                    }, (err) => {
-                        vscode.window.showErrorMessage('ERROR: ' + err);
-                    });
-                }
-            })
+    fs.stat(jiraConfDir, function (err, stats) {
+        if (err === null) {
+            let jiraConfig = require(jiraConfDir);
+            client = new JiraClient(jiraConfig);
+            if (!client.server) {
+                Handler.error('ERROR: can not get jira host at config file');
+            }
         } else {
-            vscode.window.showErrorMessage('ERROR: no config file at' + `${cwd}/.vscode/jira.json`);
+            Handler.error('ERROR: no config file at' + `${cwd}/.vscode/jira.json`);
         }
     });
 
-    context.subscriptions.push(comment);
+    let comment = vscode.commands.registerCommand('extension.jiraCommit', () => {
+        if (!client.isConnection()) {
+            Handler.error('ERROR: can not connect jira host');
+            return;
+        }
+        Handler.addCommentForIssue(client);
+    });
+
+    let tasks = vscode.commands.registerCommand("extension.jiraTasks", () => {
+        if (!client.isConnection()) {
+            Handler.error('ERROR: can not connect jira host');
+            return;
+        }
+        Handler.getMyIssues(client);
+    });
+
+    context.subscriptions.concat([comment, tasks]);
 }
 
 // this method is called when your extension is deactivated

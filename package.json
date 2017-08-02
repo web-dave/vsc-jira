@@ -19,7 +19,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.jiraCommit"
+        "onCommand:extension.jiraCommit",
+        "onCommand:extension.jiraTasks"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -27,6 +28,9 @@
             {
                 "command": "extension.jiraCommit",
                 "title": "jira issue add git commit as comment"
+            }, {
+                "command": "extension.jiraTasks",
+                "title": "jira show tasks"
             }
         ]
     },
