@@ -112,9 +112,16 @@ export class Handler {
                     options = {
                         placeHolder: "select task status!",
                         matchOnDescription: true
-                    };
+                    },
+                    statuses: any = null;
 
-                for (let status of data[0].statuses) {
+                if (data instanceof Array) {
+                    statuses = data[0].statuses;
+                } else {
+                    statuses = data.statuses;
+                }
+
+                for (let status of statuses) {
                     let item: QuickPickItem = {
                         label: status.name,
                         description: status.description,
