@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (!client.server) {
                 Handler.error('ERROR: can not get jira host at config file');
             }
+            Handler.setClient(client);
         } else {
             Handler.error('ERROR: no config file at' + `${cwd}/.vscode/jira.json`);
         }
@@ -38,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
             Handler.error('ERROR: can not connect jira host');
             return;
         }
-        Handler.addCommentForIssue(client);
+        Handler.addCommentForIssue();
     });
 
     let tasks = vscode.commands.registerCommand("extension.jiraTasks", () => {
@@ -46,10 +47,18 @@ export function activate(context: vscode.ExtensionContext) {
             Handler.error('ERROR: can not connect jira host');
             return;
         }
-        Handler.getMyIssues(client);
+        Handler.getMyIssues();
     });
 
-    context.subscriptions.concat([comment, tasks]);
+    let doTask = vscode.commands.registerCommand("extension.jiraDoTasks", () => {
+        if (!client.isConnection()) {
+            Handler.error('ERROR: can not connect jira host');
+            return;
+        }
+        Handler.doMyIssue();
+    });
+
+    context.subscriptions.concat([comment, tasks, doTask]);
 }
 
 // this method is called when your extension is deactivated

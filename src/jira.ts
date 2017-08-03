@@ -142,4 +142,37 @@ export class JiraClient {
         );
     }
 
+    /**
+     * Get transitions for current issue.
+     * 
+     * @param {string} issueKey 
+     * @param {((code: number, data: string | any) => void)} callback 
+     * @memberof JiraClient
+     */
+    transitions (issueKey: string, callback: (code: number, data: string | any) => void): void {
+        this.client.listTransitions(issueKey).then(data => {
+            callback(200, data);
+        }, (err) => {
+            callback(400, err);
+        });
+    }
+
+    /**
+     * Do transitions for current issue.
+     * 
+     * @param {string} issueKey 
+     * @param {string} transitionId 
+     * @param {((code: number, data: string | any) => void)} callback 
+     * @memberof JiraClient
+     */
+    doTransition (issueKey: string, transitionId: string, callback: (code: number, data: string | any) => void): void {
+        this.client.transitionIssue(issueKey, {
+            "transition": transitionId
+        }).then(data => {
+            callback(200, data);
+        }, (err) => {
+            callback(400, err);
+        });
+    }
+
 }

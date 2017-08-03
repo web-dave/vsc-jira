@@ -20,7 +20,8 @@
     ],
     "activationEvents": [
         "onCommand:extension.jiraCommit",
-        "onCommand:extension.jiraTasks"
+        "onCommand:extension.jiraTasks",
+        "onCommand:extension.jiraDoTasks"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -31,6 +32,9 @@
             }, {
                 "command": "extension.jiraTasks",
                 "title": "jira show tasks"
+            }, {
+                "command": "extension.jiraDoTasks",
+                "title": "jira do task"
             }
         ]
     },

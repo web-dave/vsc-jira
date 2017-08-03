@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import * as historyUtil from "./historyUtils";
 
 import { JiraClient } from "./jira";
-import { InputBoxOptions, QuickPickItem } from "vscode";
+import { InputBoxOptions, QuickPickItem, QuickPickOptions } from "vscode";
 
 /**
  * vscode util class.
@@ -13,6 +13,27 @@ import { InputBoxOptions, QuickPickItem } from "vscode";
  * @class Handler
  */
 export class Handler {
+
+    /**
+     * JIRA client instance.
+     * 
+     * @private
+     * @static
+     * @type {JiraClient}
+     * @memberof Handler
+     */
+    private static client: JiraClient = null;
+
+    /**
+     * Set a jira client.
+     * 
+     * @static
+     * @param {JiraClient} client 
+     * @memberof Handler
+     */
+    public static setClient(client: JiraClient): void {
+        this.client = client;
+    }
 
     /**
      * Show error message.
@@ -51,7 +72,8 @@ export class Handler {
      * @static
      * @memberof Handler
      */
-    public static addCommentForIssue (client: JiraClient): void {
+    public static addCommentForIssue (): void {
+        let self = this;
         this.inputBox({ placeHolder: "ID of a Issue" }).then((data) => {
             if ((data !== undefined) && (data !== null)) {
                 let issueNumber = data;
@@ -72,7 +94,7 @@ export class Handler {
 
                             console.log(comment);
 
-                            client.findIssueAndComment(issueNumber, comment, function (code, data) {
+                            self.client.findIssueAndComment(issueNumber, comment, function (code, data) {
                                 if (data instanceof String) {
                                     if (code === 200) {
                                         vscode.window.setStatusBarMessage(data as string);
@@ -98,18 +120,18 @@ export class Handler {
      * Get my jira issue tasks.
      * 
      * @static
-     * @param {JiraClient} client 
+     * @param {(item: QuickPickItem) => void} [callback] 
      * @memberof Handler
      */
-    public static getMyIssues (client: JiraClient): void {
+    public static getMyIssues (callback?: (item: QuickPickItem) => void): void {
 
         let self = this;
-        client.listStatuses(function (code, data) {
+        this.client.listStatuses(function (code, data) {
             if (code === 400) {
                 return self.error(data);
             } else {
                 let items: QuickPickItem[] = [],
-                    options = {
+                    options: QuickPickOptions = {
                         placeHolder: "select task status!",
                         matchOnDescription: true
                     },
@@ -121,6 +143,10 @@ export class Handler {
                     statuses = data.statuses;
                 }
 
+                items.push({
+                    label: 'All',
+                    description: 'All issue statuses'
+                });
                 for (let status of statuses) {
                     let item: QuickPickItem = {
                         label: status.name,
@@ -130,7 +156,7 @@ export class Handler {
                 }
                 vscode.window.showQuickPick(items, options).then((data) => {
                     if (data) {
-                        self.getIssuesByStatus(client, data);
+                        self.getIssuesByStatus(data, callback);
                     }
                 });
             }
@@ -141,34 +167,94 @@ export class Handler {
      * Get issues by status.
      * 
      * @private
-     * @param {JiraClient} client 
+     * @static
      * @param {QuickPickItem} status 
+     * @param {(item: QuickPickItem) => void} [callback] 
      * @memberof Handler
      */
-    private static getIssuesByStatus (client: JiraClient, status: QuickPickItem): void {
-            client.searchJira(`assignee = ${client.username} and status = ${status.label} order by priority desc`, function (code, data) {
-                if (code === 400) {
-                    return console.error(data);
-                }
-                console.log(data);
-                let items: QuickPickItem[] = [],
-                    options = {
-                        placeHolder: "select task!",
-                        matchOnDetail: true
-                    };
+    private static getIssuesByStatus (status: QuickPickItem, callback?: (item: QuickPickItem) => void): void {
+        let other = status.label !== 'All' ? `and status = ${status.label}`: '',
+            url = `assignee = ${this.client.username} ${other} order by priority desc`;
 
-                for (let issue of data.issues) {
-                    let item: QuickPickItem = {
-                        label: issue.key,
-                        description: issue.fields.status.name,
-                        detail: issue.fields.summary,
-                    };
-                    items.push(item);
-                }
-                vscode.window.showQuickPick(items, options).then((data) => {
-                    console.log(data);
-                });
+        this.client.searchJira(url, function (code, data) {
+            if (code === 400) {
+                return console.error(data);
+            }
+            let items: QuickPickItem[] = [],
+                options = {
+                    placeHolder: "select task!",
+                    matchOnDetail: true
+                };
+
+            for (let issue of data.issues) {
+                let item: QuickPickItem = {
+                    label: issue.key,
+                    description: issue.fields.status.name,
+                    detail: issue.fields.summary,
+                };
+                items.push(item);
+            }
+            vscode.window.showQuickPick(items, options).then((data) => {
+                callback(data);
             });
-        }
+        });
+    }
+
+    /**
+     * Do my issure.
+     * 
+     * @static
+     * @memberof Handler
+     */
+    public static doMyIssue(): void {
+        let self = this;
+        this.getMyIssues(function (item) {
+            if (!item) return;
+
+            self.client.transitions(item.label, function (code, data) {
+                if (code === 200) {
+                    let items: QuickPickItem[] = [],
+                        options = {
+                            placeHolder: "select one transition!",
+                            matchOnDetail: true
+                        };
+
+                    for (let trans of data.transitions) {
+                        let item: QuickPickItem = {
+                            label: trans.id,
+                            description: trans.name
+                        };
+                        items.push(item);
+                    }
+                    vscode.window.showQuickPick(items, options).then((data) => {
+                        if (data) {
+                            self.doIssueTransition(item.label, data);
+                        }
+                    });
+                } else {
+                    self.error(data);
+                }
+            });
+        });
+    }
+
+    /**
+     * Handle issue with a transtion
+     * 
+     * @private
+     * @static
+     * @param {string} issueKey 
+     * @param {QuickPickItem} item 
+     * @memberof Handler
+     */
+    private static doIssueTransition (issueKey: string, item: QuickPickItem): void {
+        this.client.doTransition(issueKey, item.label, function (code, data) {
+            if (code !== 200) {
+                vscode.window.setStatusBarMessage(`Transition failured. ${data}`);
+            } else {
+                vscode.window.setStatusBarMessage('Transition successed.', 2000);
+            }
+        });
+    }
 
 }
