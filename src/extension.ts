@@ -9,6 +9,7 @@ import { JiraClient } from './jira';
 import { QuickPickItem } from 'vscode';
 import { Handler } from './handler';
 
+const Copy = require('copy-paste');
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -47,7 +48,13 @@ export function activate(context: vscode.ExtensionContext) {
             Handler.error('ERROR: can not connect jira host');
             return;
         }
-        Handler.getMyIssues();
+        Handler.getMyIssues(function(data) {
+            if (data) {
+                Copy.copy(`${data.label} ${data.detail}`, function () {
+                    vscode.window.setStatusBarMessage('The issue is copied.', 2000);
+                });
+            }
+        });
     });
 
     let doTask = vscode.commands.registerCommand("extension.jiraDoTasks", () => {
